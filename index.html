@@ -3,374 +3,295 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MCQ Printable A4</title>
+<title>MCQ Word Style Pagination</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet" />
-
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <style>
-    /* RESET & BASICS */
+    /* --- BASIC RESET --- */
     * { box-sizing: border-box; }
-    
-    body { 
-        font-family: 'Noto Serif Bengali', serif; 
-        font-size: 14px; 
-        margin: 0; 
-        background: #525659; /* Document viewer dark grey */
+    body {
+        font-family: 'Noto Serif Bengali', serif;
+        font-size: 13px; /* Adjusted for better fit */
+        margin: 0;
+        background: #525659; /* App-like background */
         height: 100vh;
-        overflow: hidden; /* Hide body scroll, let content scroll */
+        overflow: hidden; 
     }
 
-    /* --- SIDEBAR STYLE --- */
+    /* --- SIDEBAR --- */
     #sidebar {
-        width: 220px;
-        background: #f8f9fa;
-        padding: 15px;
+        width: 200px;
+        background: #f1f3f4;
         border-right: 1px solid #ccc;
         height: 100vh;
         position: fixed;
-        top: 0;
-        left: 0;
+        top: 0; left: 0;
+        padding: 15px;
+        z-index: 100;
         overflow-y: auto;
-        transition: transform 0.3s ease;
-        z-index: 1000;
     }
-
-    #sidebar h3 { margin-top: 0; text-align: center; color: #333; }
-
     .json-btn {
-        width: 100%;
-        margin: 5px 0;
-        padding: 10px;
-        background: #e9ecef;
-        border: 1px solid #ced4da;
-        cursor: pointer;
-        font-size: 15px;
-        border-radius: 4px;
-        text-align: left;
-        transition: all 0.2s;
-        font-family: inherit;
+        width: 100%; padding: 10px; margin-bottom: 5px;
+        border: 1px solid #ccc; background: #fff; cursor: pointer;
+        text-align: left; border-radius: 4px;
     }
-
-    .json-btn:hover { background: #dee2e6; }
-    .json-btn.active { background: #6a1b9a; color: #fff; border-color: #6a1b9a; }
+    .json-btn.active { background: #333; color: #fff; }
 
     /* --- MAIN VIEWPORT --- */
-    #content {
-        margin-left: 220px; /* Offset for sidebar */
+    #content-viewport {
+        margin-left: 200px;
         height: 100vh;
-        width: calc(100% - 220px);
-        overflow: auto; /* ENABLE SCROLLING FOR THE A4 SHEET */
-        padding: 30px; /* Space around the paper */
-        display: flex;
-        justify-content: center; /* Center paper horizontally */
-        align-items: flex-start;
-    }
-
-    /* --- THE A4 PAPER --- */
-    .a4-sheet {
-        /* FIXED A4 DIMENSIONS */
-        width: 210mm;
-        min-height: 297mm; /* Min height for A4 */
-        
-        /* VISUALS */
-        background: #fff;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        
-        /* MARGINS AS REQUESTED */
-        padding: 20px; 
-        
-        /* LAYOUT */
+        overflow: auto; /* Allow scrolling pages */
+        padding: 30px;
         display: flex;
         flex-direction: column;
-        
-        /* Prevent shrinking */
-        flex-shrink: 0; 
+        align-items: center; /* Center pages */
+        gap: 20px; /* Space between pages */
     }
 
-    /* HEADER */
-    #header-section {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #aaa;
+    /* --- THE A4 PAGE --- */
+    .page {
+        width: 210mm;
+        height: 297mm;
+        background: white;
+        padding: 20px; /* Page Margin */
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        position: relative;
+        overflow: hidden; /* Hides content while calculating */
+        flex-shrink: 0;
     }
-    .main-header { font-size: 20px; font-weight: 700; line-height: 1.4; }
 
-    /* MCQ COLUMNS */
-    #mcq-container {
-        column-count: 3;
-        column-gap: 20px;
-        column-fill: balance;
+    /* --- COLUMNS INSIDE PAGE --- */
+    .page-content {
         height: 100%;
+        column-count: 2;
+        column-gap: 30px; 
+        column-fill: auto; /* Fill col 1 completely before moving to col 2 */
+        column-rule: 1px solid #eee; /* Optional: line between columns */
     }
 
+    /* --- MCQ ITEM STYLING --- */
     .mcq {
-        break-inside: avoid; /* Don't split a question across columns */
-        margin-bottom: 12px;
+        break-inside: avoid; /* Prevent splitting a question between cols */
         page-break-inside: avoid;
+        margin-bottom: 12px;
+        font-size: 12px;
+        border-bottom: 1px dashed #eee; /* Optional separator */
+        padding-bottom: 5px;
     }
 
-    .label-row {
+    .question-row {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 3px;
+        font-weight: bold;
+        margin-bottom: 4px;
     }
 
-    .question-text { flex: 1; font-weight: 600; padding-right: 5px; }
-
-    .answer {
-        font-weight: bold;
-        font-size: 11px;
-        min-width: 18px;
-        height: 18px;
+    .ans-circle {
         border: 1px solid #000;
+        width: 16px; height: 16px;
         border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        text-align: center;
+        line-height: 14px;
+        font-size: 10px;
+        flex-shrink: 0;
+        margin-left: 5px;
+    }
+
+    /* --- 4 OPTIONS PER LINE --- */
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* Exactly 4 columns */
+        gap: 5px;
         margin-top: 2px;
     }
-
-    .options {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 2 options per row */
-        column-gap: 5px;
-        font-size: 13px;
-        line-height: 1.3;
+    
+    .opt {
+        font-size: 11px;
+        white-space: nowrap; /* Force single line */
+        overflow: hidden;
+        text-overflow: ellipsis; /* Add ... if text too long */
     }
 
-    img, math { max-width: 100%; }
-
-    /* UI BUTTONS */
-    #sidebar-toggle {
-        display: none;
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 1100;
-        padding: 8px 12px;
-        background: #333;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    #printBtn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: #d32f2f;
-        color: #fff;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        z-index: 999;
-        font-size: 12px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    /* --- RESPONSIVE / MOBILE --- */
-    @media (max-width: 900px) {
-        #sidebar {
-            transform: translateX(-100%);
-        }
-        #sidebar.show {
-            transform: translateX(0);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-        }
-        #content {
-            margin-left: 0;
-            width: 100%;
-            padding: 10px; /* Less grey space on mobile */
-            justify-content: flex-start; /* Align left to make scrolling natural */
-        }
-        #sidebar-toggle { display: block; }
-        
-        /* Note: We DO NOT change .a4-sheet width. 
-           It stays 210mm, forcing horizontal scroll on small screens */
+    /* HEADER (Only on first page) */
+    .doc-header {
+        text-align: center;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #333;
+        column-span: all; /* Spans across both columns */
     }
 
     /* --- PRINT SETTINGS --- */
     @media print {
-        @page { 
-            size: A4; 
-            margin: 0; /* Browser margin 0, we use padding */
-        }
-        body { 
-            background: #fff; 
+        body, #content-viewport { 
+            background: white; 
+            margin: 0; 
+            padding: 0; 
             height: auto; 
-            overflow: visible;
+            overflow: visible; 
+            display: block; 
         }
-        #sidebar, #printBtn, #sidebar-toggle { display: none !important; }
+        #sidebar, .json-btn, button { display: none !important; }
         
-        #content {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: auto;
-            overflow: visible;
-            display: block;
-        }
-
-        .a4-sheet {
-            width: 100%; /* Fill print page */
-            height: auto;
-            min-height: auto;
+        .page {
             box-shadow: none;
             margin: 0;
-            padding: 20px; /* The 20px margin requested */
+            page-break-after: always; /* Force new paper for every div */
+            height: 297mm; /* Ensure height is fixed for column flow */
+            overflow: hidden;
         }
         
-        #mcq-container {
-             /* Fix column break issues in print preview */
-            column-fill: auto;
-        }
+        /* Remove margin from last page to avoid blank sheet */
+        .page:last-child { page-break-after: auto; }
+    }
+    
+    /* MOBILE TOGGLE */
+    #toggle-menu { display: none; position: fixed; top: 10px; left: 10px; z-index: 200; }
+    @media(max-width: 768px) {
+        #sidebar { display: none; }
+        #sidebar.show { display: block; }
+        #content-viewport { margin-left: 0; padding: 10px; align-items: flex-start; }
+        #toggle-menu { display: block; }
     }
 </style>
 </head>
 <body>
 
-<button id="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+<button id="toggle-menu" onclick="document.getElementById('sidebar').classList.toggle('show')">Menu</button>
 
 <div id="sidebar">
-    <h3>Question Bank</h3>
+    <h3 style="text-align:center">Question Bank</h3>
     </div>
 
-<div id="content">
-    
-    <div class="a4-sheet">
-        <div id="header-section"></div>
-        <div id="mcq-container"></div>
+<div id="content-viewport">
     </div>
-
-</div>
-
-<button id="printBtn" onclick="window.print()">Print</button>
 
 <script>
-    // --- YOUR DATA CONFIG ---
+    // --- DATA SOURCES ---
     const jsonMap = {
-        "All Bcs": "json/bcs_all.json",
-        "Bangla": "json/bangla.json"
+        "BCS Preliminary": "json/bcs_all.json",
+        "Primary School": "json/bangla.json"
     };
-    // ------------------------
 
+    // --- LOGIC ---
+    const viewport = document.getElementById('content-viewport');
     const sidebar = document.getElementById('sidebar');
-    const container = document.getElementById('sidebar'); // Appending directly to sidebar
-    let activeButton = null;
 
-    // 1. Generate Sidebar
+    // 1. Initialize Sidebar
     Object.keys(jsonMap).forEach(key => {
         const btn = document.createElement('button');
         btn.className = 'json-btn';
         btn.textContent = key;
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
+            document.querySelectorAll('.json-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             loadJSON(jsonMap[key]);
-            setActiveButton(btn);
-            // On mobile, close sidebar after selection
-            if (window.innerWidth <= 900) sidebar.classList.remove('show');
-        });
-        container.appendChild(btn);
+            if(window.innerWidth < 768) sidebar.classList.remove('show');
+        };
+        sidebar.appendChild(btn);
     });
 
-    function setActiveButton(btn) {
-        if (activeButton) activeButton.classList.remove('active');
-        btn.classList.add('active');
-        activeButton = btn;
+    // 2. Load JSON
+    function loadJSON(path) {
+        viewport.innerHTML = "<p style='color:white; text-align:center'>Loading and paginating...</p>";
+        
+        fetch(path)
+            .then(res => res.json())
+            .then(data => {
+                // We use a slight timeout to let the DOM refresh before heavy calculation
+                setTimeout(() => paginateMCQs(data), 50);
+            })
+            .catch(err => alert("Error: " + err));
     }
 
-    function toggleSidebar() {
-        sidebar.classList.toggle('show');
-    }
+    // 3. THE PAGINATION ENGINE
+    function paginateMCQs(data) {
+        viewport.innerHTML = ""; // Clear existing
 
-    function renderMCQ(data) {
-        const headerContainer = document.getElementById('header-section');
-        const mcqContainer = document.getElementById('mcq-container');
-        const letters = ['a','b','c','d','e','f'];
+        const letters = ['a','b','c','d'];
 
-        // Clear previous
-        headerContainer.innerHTML = "";
-        mcqContainer.innerHTML = "";
-
-        // Header
-        if (data.length > 0 && data[0].header) {
-            data[0].header.forEach(text => {
-                if (text.trim() !== "") {
-                    const div = document.createElement('div');
-                    div.className = 'main-header';
-                    div.textContent = text;
-                    headerContainer.appendChild(div);
-                }
-            });
+        // Helper to create a new blank page
+        function createNewPage() {
+            const page = document.createElement('div');
+            page.className = 'page';
+            const content = document.createElement('div');
+            content.className = 'page-content';
+            page.appendChild(content);
+            viewport.appendChild(page);
+            return content;
         }
 
-        // Questions
+        let currentPageContent = createNewPage();
+        let headerAdded = false;
+
+        // 3.1. Add Header (Only to the first page)
+        if (data.length > 0 && data[0].header) {
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'doc-header';
+            data[0].header.forEach(t => {
+                const h = document.createElement('div');
+                h.style.fontWeight = "bold"; h.style.fontSize="16px";
+                h.textContent = t;
+                headerDiv.appendChild(h);
+            });
+            currentPageContent.appendChild(headerDiv);
+        }
+
+        // 3.2. Loop through Questions
         for (let i = 1; i < data.length; i++) {
             const item = data[i];
-            const mcq = document.createElement('div');
-            mcq.className = 'mcq';
 
-            // Top Row: Question + Answer Bubble
-            const labelRow = document.createElement('div');
-            labelRow.className = 'label-row';
+            // Create MCQ Element
+            const mcqDiv = document.createElement('div');
+            mcqDiv.className = 'mcq';
 
-            const qText = document.createElement('div');
-            qText.className = 'question-text';
-            qText.innerHTML = `${i}. ${item.label}`;
+            // Question Text Row
+            const qRow = document.createElement('div');
+            qRow.className = 'question-row';
+            qRow.innerHTML = `<span>${i}. ${item.label}</span> <div class="ans-circle">${(item.answer||"").toUpperCase()}</div>`;
+            mcqDiv.appendChild(qRow);
 
-            const ans = document.createElement('div');
-            ans.className = 'answer';
-            ans.textContent = (item.answer || "").toUpperCase();
-
-            labelRow.appendChild(qText);
-            labelRow.appendChild(ans);
-            mcq.appendChild(labelRow);
-
-            // Options Grid
-            if(item.options && item.options.length > 0){
-                const opts = document.createElement('div');
-                opts.className = 'options';
-
+            // Options Grid (4 per line)
+            if (item.options) {
+                const optGrid = document.createElement('div');
+                optGrid.className = 'options-grid';
                 item.options.forEach((op, idx) => {
-                    const span = document.createElement('div'); // div ensures grid works better than span
-                    span.innerHTML = `<b>${letters[idx]})</b> ${op}`;
-                    opts.appendChild(span);
+                    const sp = document.createElement('div');
+                    sp.className = 'opt';
+                    sp.innerHTML = `<b>${letters[idx]})</b> ${op}`;
+                    optGrid.appendChild(sp);
                 });
-                mcq.appendChild(opts);
+                mcqDiv.appendChild(optGrid);
             }
 
-            mcqContainer.appendChild(mcq);
+            // 3.3. APPEND & CHECK OVERFLOW
+            // We append the question to the current page
+            currentPageContent.appendChild(mcqDiv);
+
+            // CHECK: Did adding this cause overflow?
+            // scrollHeight > clientHeight means content is taller than the A4 page container
+            if (currentPageContent.scrollHeight > currentPageContent.clientHeight) {
+                
+                // 1. Remove the item that caused overflow
+                currentPageContent.removeChild(mcqDiv);
+                
+                // 2. Create a NEW Page
+                currentPageContent = createNewPage();
+                
+                // 3. Add the item to the NEW page
+                currentPageContent.appendChild(mcqDiv);
+            }
         }
 
-        // Re-render Math if needed
+        // Re-render math
         if(window.MathJax) MathJax.typesetPromise();
     }
 
-    function loadJSON(path) {
-        fetch(path)
-            .then(res => res.json())
-            .then(data => renderMCQ(data))
-            .catch(err => {
-                console.error(err);
-                alert("Error loading JSON: " + err.message);
-            });
-    }
+    // Auto load first
+    if(sidebar.firstChild.nextSibling) sidebar.firstChild.nextSibling.click();
 
-    // Auto-load first item
-    window.addEventListener('DOMContentLoaded', () => {
-        const firstBtn = sidebar.querySelector('.json-btn');
-        if (firstBtn) firstBtn.click();
-    });
 </script>
-
 </body>
 </html>
