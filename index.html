@@ -1,297 +1,377 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MCQ Word Style Pagination</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<title>Pro MCQ Generator (Dense Single Column)</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- ===========================
+       MATHJAX FIX CONFIG
+=========================== -->
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+  svg: { fontCache: 'global' },
+  loader: { load: ['output/svg'] }
+};
+</script>
+
+<!-- Load MathJax: MUST BE SVG VERSION -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
 <style>
-    /* --- BASIC RESET --- */
-    * { box-sizing: border-box; }
-    body {
-        font-family: 'Noto Serif Bengali', serif;
-        font-size: 13px; /* Adjusted for better fit */
-        margin: 0;
-        background: #525659; /* App-like background */
-        height: 100vh;
-        overflow: hidden; 
-    }
+  :root {
+    --sidebar-width: 260px;
+    --primary: #2563eb;
+    --bg-gray: #f3f4f6;
+    --text-dark: #1f2937;
+  }
 
-    /* --- SIDEBAR --- */
-    #sidebar {
-        width: 200px;
-        background: #f1f3f4;
-        border-right: 1px solid #ccc;
-        height: 100vh;
-        position: fixed;
-        top: 0; left: 0;
-        padding: 15px;
-        z-index: 100;
-        overflow-y: auto;
-    }
-    .json-btn {
-        width: 100%; padding: 10px; margin-bottom: 5px;
-        border: 1px solid #ccc; background: #fff; cursor: pointer;
-        text-align: left; border-radius: 4px;
-    }
-    .json-btn.active { background: #333; color: #fff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-gray);
+    display: flex;
+    min-height: 100vh;
+  }
 
-    /* --- MAIN VIEWPORT --- */
-    #content-viewport {
-        margin-left: 200px;
-        height: 100vh;
-        overflow: auto; /* Allow scrolling pages */
-        padding: 30px;
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* Center pages */
-        gap: 20px; /* Space between pages */
-    }
+  /* --- SIDEBAR --- */
+  #sidebar {
+    width: var(--sidebar-width);
+    background: #fff;
+    min-height: 100vh;
+    position: fixed;
+    left: 0; top: 0;
+    z-index: 1000;
+    border-right: 1px solid #ddd;
+    transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
+  }
+  @media (max-width: 1024px) {
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+  }
+  .sidebar-header {
+    padding: 15px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .close-sidebar-btn { display: none; background:none; border:none; font-size: 1.2rem; cursor:pointer; }
+  @media (max-width: 1024px) { .close-sidebar-btn { display: block; } }
+  .nav-list { padding: 10px; overflow-y: auto; flex: 1; }
 
-    /* --- THE A4 PAGE --- */
-    .page {
-        width: 210mm;
-        height: 297mm;
-        background: white;
-        padding: 20px; /* Page Margin */
-        box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        position: relative;
-        overflow: hidden; /* Hides content while calculating */
-        flex-shrink: 0;
-    }
+  .json-btn {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    transition: all 0.2s;
+  }
+  .json-btn:hover { background: #f3f4f6; }
+  .json-btn.active { background: #eff6ff; border-color: var(--primary); color: var(--primary); font-weight: 600; }
 
-    /* --- COLUMNS INSIDE PAGE --- */
-    .page-content {
-        height: 100%;
-        column-count: 2;
-        column-gap: 30px; 
-        column-fill: auto; /* Fill col 1 completely before moving to col 2 */
-        column-rule: 1px solid #eee; /* Optional: line between columns */
-    }
+  /* --- MAIN CONTENT --- */
+  #main-area {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    padding: 10px;
+    transition: margin-left .3s;
+  }
+  @media (max-width: 1024px) {
+    #main-area { margin-left: 0; padding: 5px; }
+  }
 
-    /* --- MCQ ITEM STYLING --- */
-    .mcq {
-        break-inside: avoid; /* Prevent splitting a question between cols */
-        page-break-inside: avoid;
-        margin-bottom: 12px;
-        font-size: 12px;
-        border-bottom: 1px dashed #eee; /* Optional separator */
-        padding-bottom: 5px;
-    }
+  /* --- MOBILE TOGGLE BUTTON --- */
+  #toggle-btn {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 500;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    display: none;
+  }
+  @media (max-width: 1024px) { #toggle-btn { display: block; } }
 
-    .question-row {
-        display: flex;
-        justify-content: space-between;
-        font-weight: bold;
-        margin-bottom: 4px;
-    }
+  /* --- DOCUMENT AREA --- */
+  #document-stage {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
 
-    .ans-circle {
-        border: 1px solid #000;
-        width: 16px; height: 16px;
-        border-radius: 50%;
-        text-align: center;
-        line-height: 14px;
-        font-size: 10px;
-        flex-shrink: 0;
-        margin-left: 5px;
-    }
+  .doc-header {
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+  }
+  .doc-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: 'Noto Serif Bengali', serif;
+  }
 
-    /* --- 4 OPTIONS PER LINE --- */
-    .options-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr); /* Exactly 4 columns */
-        gap: 5px;
-        margin-top: 2px;
-    }
-    
-    .opt {
-        font-size: 11px;
-        white-space: nowrap; /* Force single line */
-        overflow: hidden;
-        text-overflow: ellipsis; /* Add ... if text too long */
-    }
+  #mcq-grid { display: flex; flex-direction: column; gap: 0; }
 
-    /* HEADER (Only on first page) */
-    .doc-header {
-        text-align: center;
-        margin-bottom: 15px;
-        padding-bottom: 5px;
-        border-bottom: 2px solid #333;
-        column-span: all; /* Spans across both columns */
-    }
+  .mcq {
+    padding: 6px 0;
+    border-bottom: 1px dotted #eee;
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 9pt;
+    line-height: 1.3;
+  }
 
-    /* --- PRINT SETTINGS --- */
-    @media print {
-        body, #content-viewport { 
-            background: white; 
-            margin: 0; 
-            padding: 0; 
-            height: auto; 
-            overflow: visible; 
-            display: block; 
-        }
-        #sidebar, .json-btn, button { display: none !important; }
-        
-        .page {
-            box-shadow: none;
-            margin: 0;
-            page-break-after: always; /* Force new paper for every div */
-            height: 297mm; /* Ensure height is fixed for column flow */
-            overflow: hidden;
-        }
-        
-        /* Remove margin from last page to avoid blank sheet */
-        .page:last-child { page-break-after: auto; }
-    }
-    
-    /* MOBILE TOGGLE */
-    #toggle-menu { display: none; position: fixed; top: 10px; left: 10px; z-index: 200; }
-    @media(max-width: 768px) {
-        #sidebar { display: none; }
-        #sidebar.show { display: block; }
-        #content-viewport { margin-left: 0; padding: 10px; align-items: flex-start; }
-        #toggle-menu { display: block; }
-    }
+  .question-row {
+    font-weight: 600;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 3px 5px;
+    font-size: 8.5pt;
+    margin-top: 3px;
+  }
+  @media(max-width:500px){
+    .options-grid { grid-template-columns: repeat(2,1fr); }
+  }
+
+  /* PDF BUTTON */
+  #pdf-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 15px 25px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 2000;
+  }
+
+  /* LOADING */
+  #loading {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(255,255,255,0.9);
+    z-index:3000;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+  }
+  .spinner { width:40px; height:40px; border:4px solid #ddd; border-top-color:var(--primary);
+    border-radius:50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to{ transform:rotate(360deg);} }
 </style>
 </head>
+
 <body>
 
-<button id="toggle-menu" onclick="document.getElementById('sidebar').classList.toggle('show')">Menu</button>
+<button id="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
 <div id="sidebar">
-    <h3 style="text-align:center">Question Bank</h3>
-    </div>
+  <div class="sidebar-header">
+    <span><i class="fas fa-book"></i> Question Bank</span>
+    <button class="close-sidebar-btn" onclick="toggleSidebar()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
 
-<div id="content-viewport">
-    </div>
+  <div class="nav-list" id="btn-container"></div>
+</div>
+
+<div id="main-area">
+  <div id="document-stage"></div>
+</div>
+
+<button id="pdf-fab"><i class="fas fa-file-pdf"></i> Save PDF</button>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="margin-top:15px;font-weight:600;color:#444;">Loading Questions...</div>
+</div>
 
 <script>
-    // --- DATA SOURCES ---
-    const jsonMap = {
-        "BCS Preliminary": "json/bcs_all.json",
-        "Primary School": "json/bangla.json"
+
+// =====================
+//     DATA CONFIG
+// =====================
+const jsonMap = {
+  "BCS Preliminary": "json/bcs_all.json", 
+  "Primary School": "json/bangla.json", 
+  "General Knowledge": "json/gk.json"
+};
+const letters = ['ক','খ','গ','ঘ'];
+
+// DOM refs
+const stage = document.getElementById('document-stage');
+const sidebar = document.getElementById('sidebar');
+
+// =====================
+//     INIT BUTTONS
+// =====================
+function init() {
+  const container = document.getElementById('btn-container');
+  let first = true;
+
+  for (let key in jsonMap) {
+    const btn = document.createElement('button');
+    btn.className = 'json-btn';
+    btn.textContent = key;
+    btn.onclick = () => {
+      document.querySelectorAll('.json-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadData(jsonMap[key]);
+      if (window.innerWidth <= 1024) toggleSidebar();
     };
+    container.appendChild(btn);
 
-    // --- LOGIC ---
-    const viewport = document.getElementById('content-viewport');
-    const sidebar = document.getElementById('sidebar');
+    if (first) { btn.click(); first = false; }
+  }
+}
+function toggleSidebar() { sidebar.classList.toggle('open'); }
 
-    // 1. Initialize Sidebar
-    Object.keys(jsonMap).forEach(key => {
-        const btn = document.createElement('button');
-        btn.className = 'json-btn';
-        btn.textContent = key;
-        btn.onclick = () => {
-            document.querySelectorAll('.json-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            loadJSON(jsonMap[key]);
-            if(window.innerWidth < 768) sidebar.classList.remove('show');
-        };
-        sidebar.appendChild(btn);
-    });
+// =====================
+//      LOAD JSON
+// =====================
+async function loadData(url) {
+  document.getElementById('loading').style.display = 'flex';
 
-    // 2. Load JSON
-    function loadJSON(path) {
-        viewport.innerHTML = "<p style='color:white; text-align:center'>Loading and paginating...</p>";
-        
-        fetch(path)
-            .then(res => res.json())
-            .then(data => {
-                // We use a slight timeout to let the DOM refresh before heavy calculation
-                setTimeout(() => paginateMCQs(data), 50);
-            })
-            .catch(err => alert("Error: " + err));
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    setTimeout(() => {
+      renderContent(data);
+      document.getElementById('loading').style.display = 'none';
+    }, 100);
+
+  } catch (err) {
+    stage.innerHTML = `<div style="padding:20px;color:red;">Error: ${err.message}</div>`;
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+// ======================
+//     RENDER QUESTIONS
+// ======================
+function renderContent(data){
+  stage.innerHTML = '';
+
+  if (!data || data.length === 0) return;
+
+  const headerText = data[0].header || ["Question Paper","Subject Code: 101"];
+
+  const headerDiv = document.createElement('div');
+  headerDiv.className = 'doc-header';
+
+  headerText.forEach((line, idx) => {
+    const d = document.createElement('div');
+    d.textContent = line;
+    if (idx===0) d.className = 'doc-title';
+    headerDiv.appendChild(d);
+  });
+
+  stage.appendChild(headerDiv);
+
+  const gridDiv = document.createElement('div');
+  gridDiv.id = 'mcq-grid';
+  stage.appendChild(gridDiv);
+
+  for (let i=1; i<data.length; i++){
+    const item = data[i];
+    const div = document.createElement('div');
+    div.className = 'mcq';
+
+    let optHtml = "";
+    if (item.options) {
+      optHtml = `<div class="options-grid">`;
+      item.options.forEach((op, idx) => {
+        optHtml += `<div class="opt"><b>${letters[idx]})</b> ${op}</div>`;
+      });
+      optHtml += "</div>";
     }
 
-    // 3. THE PAGINATION ENGINE
-    function paginateMCQs(data) {
-        viewport.innerHTML = ""; // Clear existing
+    div.innerHTML = `
+      <div class="question-row">
+        <span>${i}. ${item.label}</span>
+        <div class="ans-bubble">${(item.answer||"").toUpperCase()}</div>
+      </div>
+      ${optHtml}
+    `;
 
-        const letters = ['a','b','c','d'];
+    gridDiv.appendChild(div);
+  }
 
-        // Helper to create a new blank page
-        function createNewPage() {
-            const page = document.createElement('div');
-            page.className = 'page';
-            const content = document.createElement('div');
-            content.className = 'page-content';
-            page.appendChild(content);
-            viewport.appendChild(page);
-            return content;
-        }
+  // Typeset MathJax
+  if (window.MathJax) MathJax.typesetPromise();
+}
 
-        let currentPageContent = createNewPage();
-        let headerAdded = false;
+// =======================
+//      PDF EXPORT
+// =======================
+document.getElementById('pdf-fab').addEventListener('click', async () => {
 
-        // 3.1. Add Header (Only to the first page)
-        if (data.length > 0 && data[0].header) {
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'doc-header';
-            data[0].header.forEach(t => {
-                const h = document.createElement('div');
-                h.style.fontWeight = "bold"; h.style.fontSize="16px";
-                h.textContent = t;
-                headerDiv.appendChild(h);
-            });
-            currentPageContent.appendChild(headerDiv);
-        }
+  // Wait for MathJax SVG rendering
+  if (window.MathJax && MathJax.typesetPromise) {
+    await MathJax.typesetPromise();
+  }
 
-        // 3.2. Loop through Questions
-        for (let i = 1; i < data.length; i++) {
-            const item = data[i];
+  const loading = document.getElementById('loading');
+  loading.style.display = 'flex';
+  loading.querySelector('div:last-child').textContent = "Creating PDF...";
 
-            // Create MCQ Element
-            const mcqDiv = document.createElement('div');
-            mcqDiv.className = 'mcq';
+  const opt = {
+    margin: 10,
+    filename: 'Question_List.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 3, useCORS: true, scrollY: 0 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
 
-            // Question Text Row
-            const qRow = document.createElement('div');
-            qRow.className = 'question-row';
-            qRow.innerHTML = `<span>${i}. ${item.label}</span> <div class="ans-circle">${(item.answer||"").toUpperCase()}</div>`;
-            mcqDiv.appendChild(qRow);
+  html2pdf().set(opt).from(stage).save().then(() => {
+    loading.style.display = 'none';
+  });
+});
 
-            // Options Grid (4 per line)
-            if (item.options) {
-                const optGrid = document.createElement('div');
-                optGrid.className = 'options-grid';
-                item.options.forEach((op, idx) => {
-                    const sp = document.createElement('div');
-                    sp.className = 'opt';
-                    sp.innerHTML = `<b>${letters[idx]})</b> ${op}`;
-                    optGrid.appendChild(sp);
-                });
-                mcqDiv.appendChild(optGrid);
-            }
-
-            // 3.3. APPEND & CHECK OVERFLOW
-            // We append the question to the current page
-            currentPageContent.appendChild(mcqDiv);
-
-            // CHECK: Did adding this cause overflow?
-            // scrollHeight > clientHeight means content is taller than the A4 page container
-            if (currentPageContent.scrollHeight > currentPageContent.clientHeight) {
-                
-                // 1. Remove the item that caused overflow
-                currentPageContent.removeChild(mcqDiv);
-                
-                // 2. Create a NEW Page
-                currentPageContent = createNewPage();
-                
-                // 3. Add the item to the NEW page
-                currentPageContent.appendChild(mcqDiv);
-            }
-        }
-
-        // Re-render math
-        if(window.MathJax) MathJax.typesetPromise();
-    }
-
-    // Auto load first
-    if(sidebar.firstChild.nextSibling) sidebar.firstChild.nextSibling.click();
-
+// Start
+init();
 </script>
 </body>
 </html>
