@@ -3,26 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro MCQ Generator (Dense Single Column)</title>
-
-<!-- Fonts -->
+<title>Pro MCQ Generator (Two Column Grid)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<!-- ===========================
-       MATHJAX FIX CONFIG
-=========================== -->
-<script>
-window.MathJax = {
-  tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-  svg: { fontCache: 'global' },
-  loader: { load: ['output/svg'] }
-};
-</script>
-
-<!-- Load MathJax: MUST BE SVG VERSION -->
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 
 <style>
   :root {
@@ -32,7 +16,8 @@ window.MathJax = {
     --text-dark: #1f2937;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0;
+  }
   
   body {
     font-family: 'Inter', sans-serif;
@@ -43,164 +28,148 @@ window.MathJax = {
 
   /* --- SIDEBAR --- */
   #sidebar {
-    width: var(--sidebar-width);
-    background: #fff;
-    min-height: 100vh;
-    position: fixed;
-    left: 0; top: 0;
-    z-index: 1000;
-    border-right: 1px solid #ddd;
-    transition: transform 0.3s;
-    display: flex;
-    flex-direction: column;
+    width: var(--sidebar-width); background: #fff; min-height: 100vh; position: fixed;
+    left: 0; top: 0; z-index: 1000; border-right: 1px solid #ddd;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column;
   }
   @media (max-width: 1024px) {
-    #sidebar { transform: translateX(-100%); }
+    #sidebar { transform: translateX(-100%); height: 100%; }
     #sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
   }
   .sidebar-header {
-    padding: 15px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--primary);
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 20px; font-size: 1.2rem; font-weight: 700; color: var(--primary);
+    border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;
   }
   .close-sidebar-btn { display: none; background:none; border:none; font-size: 1.2rem; cursor:pointer; }
   @media (max-width: 1024px) { .close-sidebar-btn { display: block; } }
-  .nav-list { padding: 10px; overflow-y: auto; flex: 1; }
 
+  .nav-list { padding: 15px; overflow-y: auto; flex: 1; }
   .json-btn {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 5px;
-    border: 1px solid #eee;
-    border-radius: 4px;
-    background: #fff;
-    text-align: left;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: var(--text-dark);
-    transition: all 0.2s;
+    width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid #eee;
+    border-radius: 6px; background: #fff; text-align: left; cursor: pointer;
+    font-size: 0.95rem; color: var(--text-dark); transition: all 0.2s;
   }
   .json-btn:hover { background: #f3f4f6; }
   .json-btn.active { background: #eff6ff; border-color: var(--primary); color: var(--primary); font-weight: 600; }
 
-  /* --- MAIN CONTENT --- */
+  /* --- MAIN CONTENT AREA --- */
   #main-area {
     flex: 1;
     margin-left: var(--sidebar-width);
-    padding: 10px;
-    transition: margin-left .3s;
+    padding: 20px;
+    transition: margin-left 0.3s;
   }
-  @media (max-width: 1024px) {
-    #main-area { margin-left: 0; padding: 5px; }
-  }
+  @media (max-width: 1024px) { #main-area { margin-left: 0; padding: 10px; } }
 
-  /* --- MOBILE TOGGLE BUTTON --- */
+  /* --- TOGGLE BUTTON (MOBILE) --- */
   #toggle-btn {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 500;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 10px;
-    cursor: pointer;
-    display: none;
+    position: fixed; top: 15px; left: 15px; z-index: 500; background: var(--primary);
+    color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none;
   }
   @media (max-width: 1024px) { #toggle-btn { display: block; } }
 
-  /* --- DOCUMENT AREA --- */
+  /* --- HEADER AND GRID CONTAINER --- */
   #document-stage {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
-    background: #fff;
-    padding: 15px;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
   .doc-header {
-    text-align: center;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
+    text-align: center; border-bottom: 2px solid #333; padding-bottom: 8px;
+    margin-bottom: 20px;
   }
-  .doc-title {
-    font-size: 1.3rem;
-    font-weight: 700;
-    font-family: 'Noto Serif Bengali', serif;
+  .doc-title { font-size: 1.5rem; font-weight: 700; font-family: 'Noto Serif Bengali', serif; color: #000; }
+
+  /* --- MCQ GRID LAYOUT (The main change) --- */
+  #mcq-grid {
+    display: grid;
+    /* Default: 2 columns with a gap */
+    grid-template-columns: repeat(2, 50%);
+     gap: 5px;
+  }
+  
+  /* Mobile: Stack MCQs in a single column */
+  @media (max-width: 768px) {
+    #mcq-grid {
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
   }
 
-  #mcq-grid { display: flex; flex-direction: column; gap: 0; }
-
+  /* --- MCQ ITEM --- */
   .mcq {
-    padding: 6px 0;
-    border-bottom: 1px dotted #eee;
+    padding: 5px 50px 5px 0;
+   /* border: 1px solid #ddd;*/
+    border-radius: 6px;
+    /*background: #fdfdfd;*/
     font-family: 'Noto Serif Bengali', serif;
-    font-size: 9pt;
-    line-height: 1.3;
+    font-size: 10pt;
+    line-height: 1.4;
+    display: flex; /* Ensures question and options are a flex container */
+    flex-direction: column;
   }
-
+ .mcq img{
+   display: block;
+   width: 90%;
+   height: auto;
+ }
+  
   .question-row {
     font-weight: 600;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+  }
+  .question-text {
+    flex-grow: 1;
+    margin-right: 5px;
+  }
+  .ans-bubble {
+    font-size: 8pt; border: 1px solid #777; width: 15px; height: 15px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: #555; flex-shrink: 0;
   }
 
+  /* --- OPTIONS GRID (4 columns, allows wrapping) --- */
   .options-grid {
-    display: grid;
-    grid-template-columns: repeat(4,1fr);
-    gap: 3px 5px;
-    font-size: 8.5pt;
-    margin-top: 3px;
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); /* 4 columns */
+    gap: 8px 5px; /* Vertical gap 8px, horizontal 5px */
+    font-size: 9pt;
+    margin-top: 5px;
   }
-  @media(max-width:500px){
-    .options-grid { grid-template-columns: repeat(2,1fr); }
+  .opt { 
+    word-wrap: break-word; overflow-wrap: anywhere; white-space: normal; line-height: 1.2; 
+  }
+  /* Mobile: 2 columns for options to save horizontal space */
+  @media (max-width: 500px) {
+    .options-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
-  /* PDF BUTTON */
+  /* --- FLOATING PDF BUTTON & LOADING --- */
   #pdf-fab {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: #ef4444;
-    color: white;
-    border: none;
-    border-radius: 50px;
-    padding: 15px 25px;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(239,68,68,0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 2000;
+    position: fixed; bottom: 30px; right: 30px; background: #ef4444; color: white;
+    border: none; border-radius: 50px; padding: 15px 25px; font-weight: bold;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); cursor: pointer; z-index: 2000;
+    display: flex; align-items: center; gap: 8px; transition: transform 0.2s;
   }
-
-  /* LOADING */
+  #pdf-fab:hover { transform: translateY(-2px); background: #dc2626; }
   #loading {
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(255,255,255,0.9);
-    z-index:3000;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
+    display:none; position:fixed; inset:0; background:rgba(255,255,255,0.9); z-index:3000; 
+    align-items:center; justify-content:center; flex-direction:column;
   }
-  .spinner { width:40px; height:40px; border:4px solid #ddd; border-top-color:var(--primary);
-    border-radius:50%; animation: spin 1s linear infinite; }
-  @keyframes spin { to{ transform:rotate(360deg);} }
+  .spinner { width:40px; height:40px; border:4px solid #ddd; border-top-color:var(--primary); border-radius:50%; animation: spin 1s infinite linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
-
 <body>
 
 <button id="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
@@ -208,49 +177,42 @@ window.MathJax = {
 <div id="sidebar">
   <div class="sidebar-header">
     <span><i class="fas fa-book"></i> Question Bank</span>
-    <button class="close-sidebar-btn" onclick="toggleSidebar()">
-      <i class="fas fa-times"></i>
-    </button>
+    <button class="close-sidebar-btn" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
   </div>
-
-  <div class="nav-list" id="btn-container"></div>
+  <div class="nav-list" id="btn-container">
+    </div>
 </div>
 
 <div id="main-area">
-  <div id="document-stage"></div>
+  <div id="document-stage">
+    </div>
 </div>
 
 <button id="pdf-fab"><i class="fas fa-file-pdf"></i> Save PDF</button>
 
 <div id="loading">
   <div class="spinner"></div>
-  <div style="margin-top:15px;font-weight:600;color:#444;">Loading Questions...</div>
+  <div style="margin-top:15px; font-weight:600; color:#444;">Generating Questions...</div>
 </div>
 
 <script>
-
-// =====================
-//     DATA CONFIG
-// =====================
+// --- DATA CONFIG ---
 const jsonMap = {
   "BCS Preliminary": "json/bcs_all.json", 
   "Primary School": "json/bangla.json", 
   "General Knowledge": "json/gk.json"
 };
-const letters = ['ক','খ','গ','ঘ'];
+const letters = ['ক', 'খ', 'গ', 'ঘ'];
 
-// DOM refs
+// --- DOM ELEMENTS ---
 const stage = document.getElementById('document-stage');
 const sidebar = document.getElementById('sidebar');
 
-// =====================
-//     INIT BUTTONS
-// =====================
+// --- INITIALIZATION & SETUP ---
 function init() {
   const container = document.getElementById('btn-container');
   let first = true;
-
-  for (let key in jsonMap) {
+  for(let key in jsonMap) {
     const btn = document.createElement('button');
     btn.className = 'json-btn';
     btn.textContent = key;
@@ -258,120 +220,123 @@ function init() {
       document.querySelectorAll('.json-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       loadData(jsonMap[key]);
-      if (window.innerWidth <= 1024) toggleSidebar();
+      if(window.innerWidth <= 1024) toggleSidebar(); 
     };
     container.appendChild(btn);
-
-    if (first) { btn.click(); first = false; }
+    if(first) { btn.click(); first = false; }
   }
 }
 function toggleSidebar() { sidebar.classList.toggle('open'); }
 
-// =====================
-//      LOAD JSON
-// =====================
 async function loadData(url) {
   document.getElementById('loading').style.display = 'flex';
-
   try {
     const res = await fetch(url);
     const data = await res.json();
-
+    
+    // Optional: Keep a small duplication loop here if your real JSON is very small and you need to see a long scroll
+    // Example for testing:
+    /* if (data.length > 1) {
+        let questions = data.slice(1);
+        for(let i = 0; i < 5; i++) { // Duplicate 5 times
+            data = data.concat(questions.map(q => ({...q})));
+        }
+    }
+    */
+    
     setTimeout(() => {
       renderContent(data);
       document.getElementById('loading').style.display = 'none';
     }, 100);
-
   } catch (err) {
-    stage.innerHTML = `<div style="padding:20px;color:red;">Error: ${err.message}</div>`;
+    stage.innerHTML = `<div style="padding:20px; color:red;">Error loading data: ${err.message}. Check JSON paths.</div>`;
     document.getElementById('loading').style.display = 'none';
   }
 }
 
-// ======================
-//     RENDER QUESTIONS
-// ======================
-function renderContent(data){
-  stage.innerHTML = '';
-
+// --- RENDER ENGINE (CONTINUOUS GRID) ---
+function renderContent(data) {
+  stage.innerHTML = ''; // Clear previous content
   if (!data || data.length === 0) return;
 
-  const headerText = data[0].header || ["Question Paper","Subject Code: 101"];
+  const headerText = data[0].header || ["Question Paper", "Subject Code: 101"];
 
+  // 1. Create Header
   const headerDiv = document.createElement('div');
   headerDiv.className = 'doc-header';
-
-  headerText.forEach((line, idx) => {
+  headerText.forEach(line => {
     const d = document.createElement('div');
     d.textContent = line;
-    if (idx===0) d.className = 'doc-title';
+    if(headerText.indexOf(line) === 0) d.className = "doc-title";
     headerDiv.appendChild(d);
   });
-
   stage.appendChild(headerDiv);
-
+  
+  //Total questions
+ const tq = data.length - 1;
+ const tqDiv = document.createElement('div');
+ tqDiv.textContent = `Total Questions: ${tq}`;
+ headerDiv.appendChild(tqDiv);
+  // 2. Create Grid Container
   const gridDiv = document.createElement('div');
   gridDiv.id = 'mcq-grid';
   stage.appendChild(gridDiv);
 
-  for (let i=1; i<data.length; i++){
+  // 3. Loop Questions
+  for (let i = 1; i < data.length; i++) {
     const item = data[i];
+    
     const div = document.createElement('div');
     div.className = 'mcq';
-
-    let optHtml = "";
+    
+    let optHtml = '';
     if (item.options) {
       optHtml = `<div class="options-grid">`;
       item.options.forEach((op, idx) => {
         optHtml += `<div class="opt"><b>${letters[idx]})</b> ${op}</div>`;
       });
-      optHtml += "</div>";
+      optHtml += `</div>`;
     }
 
     div.innerHTML = `
       <div class="question-row">
-        <span>${i}. ${item.label}</span>
-        <div class="ans-bubble">${(item.answer||"").toUpperCase()}</div>
+        <span class="question-text"> ${item.label}</span>
+        <div class="ans-bubble">${(item.answer || "").toUpperCase()}</div>
       </div>
       ${optHtml}
     `;
 
     gridDiv.appendChild(div);
   }
-
-  // Typeset MathJax
-  if (window.MathJax) MathJax.typesetPromise();
 }
 
-// =======================
-//      PDF EXPORT
-// =======================
-document.getElementById('pdf-fab').addEventListener('click', async () => {
-
-  // Wait for MathJax SVG rendering
-  if (window.MathJax && MathJax.typesetPromise) {
-    await MathJax.typesetPromise();
-  }
-
+// --- PDF GENERATION (Modified for full page export) ---
+document.getElementById('pdf-fab').addEventListener('click', () => {
   const loading = document.getElementById('loading');
   loading.style.display = 'flex';
-  loading.querySelector('div:last-child').textContent = "Creating PDF...";
+  loading.querySelector('div:last-child').textContent = "Creating PDF (Full Scroll)...";
 
   const opt = {
-    margin: 10,
-    filename: 'Question_List.pdf',
+    margin: 2, // A standard margin around the content
+    filename: 'Question_Grid.pdf',
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 3, useCORS: true, scrollY: 0 },
+    html2canvas: { 
+      scale: 3, // High scale for clear text
+      useCORS: true,
+      scrollY: 0, // Ensure it captures from the top
+    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
+  // We target the entire document-stage for the continuous scroll export
   html2pdf().set(opt).from(stage).save().then(() => {
     loading.style.display = 'none';
   });
 });
 
-// Start
+// Run
 init();
+
 </script>
 </body>
 </html>
